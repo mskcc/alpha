@@ -37,19 +37,27 @@ workflow REALIGN_PAIR {
         tumor_index=getBamIndexPath(tumor_bam)
         normal_index=getBamIndexPath(normal_bam)
         meta=["id":sample_name]
+        println "============================="
+        println "ROI="
+        println roi_bed
+        println ""
 
-        ABRA(
-            tuple(
-                meta,
-                tumor_bam,tumor_index,
-                normal_bam,normal_index,
-                roi_bed
-                ),
-            tuple(
-                genome,
-                genome_fasta,genome_index
-                )
-            )
+        (bams,version)=ABRA(
+                            tuple(
+                                meta,
+                                tumor_bam,tumor_index,
+                                normal_bam,normal_index,
+                                roi_bed
+                                ),
+                            tuple(
+                                genome,
+                                genome_fasta,genome_index
+                                )
+                            )
+
+    emit:
+        bams
+        version
 }
 
 workflow BRAVO {
@@ -63,7 +71,8 @@ workflow BRAVO {
         roi_bed
 
     main:
-        REALIGN_PAIR(sample_name,tumor_bam,normal_bam,genome,genome_fasta,roi_bed)
+        (bams,version)=REALIGN_PAIR(sample_name,tumor_bam,normal_bam,genome,genome_fasta,roi_bed)
+        //bams.view()
 
 }
 
@@ -77,8 +86,6 @@ workflow {
         file(params.fasta),
         file(params.roi_bed)
         )
-
-
 
 }
 
