@@ -11,6 +11,17 @@ nextflow.enable.dsl = 2
 
 include { ABRA } from './modules/local/abra'
 
+def getBamIndexPath(bam) {
+    bam_index=file(bam.toString().replace(".bam",".bai"))
+    if(!bam_index.exists()) {
+        bam_index=bam+".bai"
+        if(!bam_index) {
+            return(null)
+        }
+    }
+    return(bam_index)
+}
+
 workflow REALIGN_PAIR {
 
     take:
@@ -23,8 +34,8 @@ workflow REALIGN_PAIR {
 
     main:
         genome_index=genome_fasta+".fai"
-        tumor_index=tumor_bam+".bai"
-        normal_index=normal_bam+".bai"
+        tumor_index=getBamIndexPath(tumor_bam)
+        normal_index=getBamIndexPath(normal_bam)
         meta=["id":sample_name]
 
         ABRA(
