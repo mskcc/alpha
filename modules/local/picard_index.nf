@@ -39,9 +39,8 @@ process PICARD_INDEX {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        picard: 2.9
-        r: 3.5.1
-        java: 8
+        picard: \$(java -jar /usr/bin/picard-tools/picard.jar BuildBamIndex 2>&1 | fgrep Version | sed 's/Version: //')
+        java: \$(java -version 2>&1 | head -1)
     END_VERSIONS
     """
 
@@ -49,15 +48,14 @@ process PICARD_INDEX {
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
-    touch ${prefix}.bam.bai
-    touch ${prefix}.bai
+    touch ${bam.baseName}.bam.bai
+    touch ${bam.baseName}.bai
 
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        picard: 2.9
-        r: 3.5.1
-        java: 8
+        picard: \$(java -jar /usr/bin/picard-tools/picard.jar BuildBamIndex 2>&1 | fgrep Version | sed 's/Version: //')
+        java: \$(java -version 2>&1 | head -1)
     END_VERSIONS
     """
 }
