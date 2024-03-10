@@ -42,22 +42,22 @@ workflow REALIGN_PAIR {
         println roi_bed
         println ""
 
-        (bams,version)=ABRA(
-                            tuple(
-                                meta,
-                                tumor_bam,tumor_index,
-                                normal_bam,normal_index,
-                                roi_bed
-                                ),
-                            tuple(
-                                genome,
-                                genome_fasta,genome_index
-                                )
-                            )
+        ABRA(
+            tuple(
+                meta,
+                tumor_bam,tumor_index,
+                normal_bam,normal_index,
+                roi_bed
+                ),
+            tuple(
+                genome,
+                genome_fasta,genome_index
+                )
+            )
 
     emit:
-        bams
-        version
+        bams = ABRA.out.bams
+        versions = ABRA.out.versions
 }
 
 workflow BRAVO {
@@ -71,8 +71,8 @@ workflow BRAVO {
         roi_bed
 
     main:
-        (bams,version)=REALIGN_PAIR(sample_name,tumor_bam,normal_bam,genome,genome_fasta,roi_bed)
-        //bams.view()
+        (bams,versions)=REALIGN_PAIR(sample_name,tumor_bam,normal_bam,genome,genome_fasta,roi_bed)
+        bams.view()
 
 }
 
