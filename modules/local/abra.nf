@@ -46,8 +46,8 @@ process ABRA {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        abra: 2.17
-        java: 8
+        abra: \$(java -jar /usr/bin/abra.jar 2>&1 | head -1 | sed 's/.*Abra version: //')
+        java: \$(java -version 2>&1 | head -1)
     END_VERSIONS
     """
 
@@ -55,14 +55,16 @@ process ABRA {
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
-    touch ${prefix}.abra.bam.bai
-    touch ${prefix}.abra.bai
+    mkdir tumor
+    mkdir normal
+    touch tumor/${tumor.baseName}.abra.bam
+    touch normal/${normal.baseName}.abra.bam
 
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        abra: 2.17
-        java: 8
+        abra: \$(java -jar /usr/bin/abra.jar 2>&1 | head -1 | sed 's/.*Abra version: //')
+        java: \$(java -version 2>&1 | head -1)
     END_VERSIONS
     """
 
