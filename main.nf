@@ -10,8 +10,7 @@
 nextflow.enable.dsl = 2
 
 include { REALIGN_PAIR } from './subworkflows/local/realign_pair.nf'
-
-/*
+include { GATK_BQSR } from './modules/local/gatk_bqsr.nf'
 workflow RECAL_PAIR {
 
 // tuple val(meta), path(tumor_bam), path(tumor_bam_index), path(normal_bam), path(normal_bam_index)
@@ -21,19 +20,39 @@ workflow RECAL_PAIR {
 
     take:
         sample_name
-        tumor_bam
-        normal_bam
+        tumor_ra_bam
+        normal_ra_bam
         genome
         genome_fasta
+        genome_fasta_index
         known_sites
-
+        known_sites_index
 
     main:
 
+        ch_indexed_bams = normal_ra_bam.join(tumor_ra_bam)
+
+        println "====================="
+        println "tumor_bam"
+        ch_indexed_bams.view()
+
+        GATK_BQSR(
+            ch_indexed_bams,
+            tuple(
+                genome,
+                genome_fasta,genome_fasta_index
+                )
+            )
+            // ,
+            // tuple(
+            //     genome,
+            //     known_sites,
+            //     known_sites_index
+            //     )
+            // )
 
 
 }
-*/
 
 workflow BRAVO {
 
@@ -53,25 +72,28 @@ workflow BRAVO {
 
         tumor_bam_index=getIndexFromPath(tumor_bam)
         normal_bam_index=getIndexFromPath(normal_bam)
-        geome_fasta_index=getIndexFromPath(genome_fasta)
+        genome_fasta_index=getIndexFromPath(genome_fasta)
 
-        result = REALIGN_PAIR(
+        known_sites_index = known_sites
+                                .map { getIndexFromPath(it) }
+
+        results = REALIGN_PAIR(
                         sample_name,
                         tumor_bam,tumor_bam_index,
                         normal_bam,normal_bam_index,
                         genome,
-                        genome_fasta,geome_fasta_index,
+                        genome_fasta,genome_fasta_index,
                         roi_bed
                         )
 
-        // RECAL_PAIR(
-        //     sample,
-        //     tumor_ra_bam,
-        //     normal_ra_bam,
-        //     genome,
-        //     genome_fasta,
-        //     known_sites
-        // )
+        RECAL_PAIR(
+            sample_name,
+            results.tumor_bam,
+            results.normal_bam,
+            genome,
+            genome_fasta,genome_fasta_index,
+            known_sites,known_sites_index
+        )
 
 }
 
@@ -121,6 +143,7 @@ def getVcfIndexPath(vcf) {
 }
 
 def getIndexFromPath(path) {
+    filename=path.toString()
     if(filename.endsWith(".vcf")) {
         return(getVcfIndexPath(path))
     } else if(filename.endsWith(".bam")) {

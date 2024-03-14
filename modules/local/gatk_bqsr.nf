@@ -12,19 +12,19 @@ process GATK_BQSR {
 
     tuple val(meta), path(tumor_bam), path(tumor_bam_index), path(normal_bam), path(normal_bam_index)
     tuple val(meta2), path(fasta), path(fai)
-    tuple val(meta3), path(known_sites), path(known_sites_index)
+//    tuple val(meta3), path(known_sites), path(known_sites_index)
 
     output:
     tuple val(meta), path("*.recal.matrix")               , emit: recal_matrix
     path "versions.yml"                                   , emit: versions
 
-    when:
-    task.ext.when == null || task.ext.when
+    // when:
+    // task.ext.when == null || task.ext.when
 
     script:
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
-    def known_sites_list = known_sites.join(" --knownSites ")
+//    def known_sites_list = known_sites.join(" --knownSites ")
 
     """
     java \
@@ -60,9 +60,18 @@ process GATK_BQSR {
     stub:
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
+
     """
     touch ${prefix}.recal.matrix
 
+echo BaseRecalibrator \
+    ${args} \
+    --input_file \
+    ${tumor_bam} \
+    --input_file \
+    ${normal_bam} \
+    --reference_sequence \
+    ${fasta}
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
