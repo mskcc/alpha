@@ -11,6 +11,7 @@ nextflow.enable.dsl = 2
 
 include { REALIGN_PAIR } from './subworkflows/local/realign_pair.nf'
 include { GATK_BQSR } from './modules/local/gatk_bqsr.nf'
+
 workflow RECAL_PAIR {
 
 // tuple val(meta), path(tumor_bam), path(tumor_bam_index), path(normal_bam), path(normal_bam_index)
@@ -25,8 +26,7 @@ workflow RECAL_PAIR {
         genome
         genome_fasta
         genome_fasta_index
-        known_sites
-        known_sites_index
+        ch_known_sites
 
     main:
 
@@ -41,15 +41,9 @@ workflow RECAL_PAIR {
             tuple(
                 genome,
                 genome_fasta,genome_fasta_index
-                )
+                ),
+            ch_known_sites
             )
-            // ,
-            // tuple(
-            //     genome,
-            //     known_sites,
-            //     known_sites_index
-            //     )
-            // )
 
 
 }
@@ -63,7 +57,7 @@ workflow BRAVO {
         genome
         genome_fasta
         roi_bed
-        known_sites
+        ch_known_sites
 
 
     main:
@@ -73,9 +67,6 @@ workflow BRAVO {
         tumor_bam_index=getIndexFromPath(tumor_bam)
         normal_bam_index=getIndexFromPath(normal_bam)
         genome_fasta_index=getIndexFromPath(genome_fasta)
-
-        known_sites_index = known_sites
-                                .map { getIndexFromPath(it) }
 
         results = REALIGN_PAIR(
                         sample_name,
@@ -92,18 +83,29 @@ workflow BRAVO {
             results.normal_bam,
             genome,
             genome_fasta,genome_fasta_index,
-            known_sites,known_sites_index
+            ch_known_sites
         )
 
 }
 
 workflow {
 
-    known_sites = Channel
-                    .fromList(params.known_sites)
-                    .map { file(it) }
-                    .filter { it.exists() }
+    known_sites=[]
+    for(single_site in params.known_sites){
+        kn=file(single_site)
+        if(kn.exists()) {
+            known_sites.add(kn)
+        }
+    }
 
+    known_sites_index=[]
+    for(single_site in known_sites){
+        known_sites_index.add(getIndexFromPath(single_site))
+    }
+
+    ch_known_sites = Channel.value(["known_sites", known_sites, known_sites_index])
+
+    ch_known_sites.view()
 
     BRAVO(
         params.sample_name,
@@ -112,7 +114,7 @@ workflow {
         params.genome,
         file(params.fasta),
         file(params.roi_bed),
-        known_sites
+        ch_known_sites
         )
 
 }
