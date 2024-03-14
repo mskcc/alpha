@@ -1,6 +1,6 @@
 process GATK_BQSR {
     tag "$meta.id"
-    label 'process_light'
+    label 'process_medium'
 
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'docker://mskcc/gatk:3.3-0':
@@ -60,6 +60,7 @@ process GATK_BQSR {
     stub:
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
+    def known_sites_list = known_sites.join(" --knownSites ")
 
     """
     touch ${prefix}.recal.matrix
